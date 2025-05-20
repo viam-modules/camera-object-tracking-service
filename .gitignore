@@ -1,0 +1,17 @@
+.DS_Store
+*.tar.gz
+.venv/
+__pycache__/
+.vscode
+venv
+results*
+
+/run.sh
+
+
+#ignore models
+/src/models/
+
+
+/pyinstaller_build/
+/pyinstaller_dist/
