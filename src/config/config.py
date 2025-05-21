@@ -9,7 +9,7 @@ from src.config.attribute import (
 )
 
 
-class TrackerConfig:
+class TrackingConfig:
     def __init__(self, config: "ServiceConfig"):
         self.re_id_threshold = FloatAttribute(
             field_name="re_id_threshold",
@@ -92,33 +92,19 @@ class TrackerConfig:
 
 class DetectorConfig:
     def __init__(self, config: "ServiceConfig"):
-        self.model_name = StringAttribute(
-            field_name="detector_model_name",
-            default_value="fasterrcnn_mobilenet_v3_large_320_fpn",
-            allowlist=[
-                "fasterrcnn_mobilenet_v3_large_320_fpn",  # low resolution model (best effort to resize smallest edge to 320)
-                "fasterrcnn_mobilenet_v3_large_fpn",  #  higher resolution model (best effort to resize smallest edge to 800)
-            ],
+        self.detector_name = StringAttribute(
+            field_name="detector_name",
+            default_value="None",
         ).validate(config)
-        self.threshold = FloatAttribute(
-            field_name="detection_threshold",
-            min_value=0.0,
-            max_value=1.0,
-            default_value=0.95,
+        self.chosen_labels = DictAttribute(
+            field_name="chosen_labels",
+            default_value=None,
         ).validate(config)
         self.device = StringAttribute(
             field_name="detector_device",
             default_value="cpu",
             allowlist=["cpu", "cuda"],
         ).validate(config)
-
-        # TODO: add usage for torchvision
-        self.max_results = IntAttribute(
-            field_name="detection_max_detection_results",
-            default_value=5,
-            min_value=1,
-        ).validate(config)
-
         self._enable_debug_tools = BoolAttribute(
             field_name="_enable_debug_tools", default_value=False
         ).validate(config)
@@ -193,24 +179,11 @@ class FeatureEncoderConfig:
         ).validate(config)
 
 
-class TracksManagerConfig:
-    def __init__(self, config: "ServiceConfig"):
-        self.path_to_db = StringAttribute(
-            field_name="path_to_database", required=True
-        ).validate(config)
-
-        self.save_period = IntAttribute(
-            field_name="save_period",
-            default_value=20,
-        ).validate(config)
-
-
-class ReIDObjetcTrackerConfig:
+class TrackerConfig:
     def __init__(self, config: ServiceConfig):
         self.config = config
 
-        self.tracker_config = TrackerConfig(config)
+        self.tracker_config = TrackingConfig(config)
         self.detector_config = DetectorConfig(config)
         self.encoder_config = FeatureEncoderConfig(config)
-        self.tracks_manager_config = TracksManagerConfig(config)
         self.face_id_config = FaceIdConfig(config)
