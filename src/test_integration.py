@@ -4,22 +4,20 @@ import os
 from typing import Dict
 
 import pytest
+import pytest_asyncio
 from google.protobuf.struct_pb2 import Struct
-from numpy import float32
-from viam.media.video import CameraMimeType
 from viam.proto.app.robot import ServiceConfig
 from viam.services.vision import Vision
 
-from src.config.config import TrackerConfig
+from src.image.image import ImageObject
 from src.test.fake_camera import FakeCamera
 from src.test.fake_detector_vision_service import FakeDetectorVisionService
-from src.tracker.track import Track
-from src.tracker.tracker import Tracker
+from src.test.fake_embedder_ml_model_service import FakeEmbedderMLModel
 from src.tracker_service import TrackerService
-from src.utils import decode_image
 
 CAMERA_NAME = "fake-camera"
 DETECTOR_NAME = "fake-detector"
+EMBEDDER_NAME = "fake-embedder"
 
 PASSING_PROPERTIES = Vision.Properties(
     classifications_supported=True,
@@ -32,7 +30,9 @@ MIN_CONFIDENCE_PASSING = 0.8
 WORKING_CONFIG_DICT = {
     "camera_name": CAMERA_NAME,
     "detector_name": DETECTOR_NAME,
+    "embedder_name": EMBEDDER_NAME,
     "_start_background_loop": False,
+    "embedder_output_name": "embedding",
 }
 
 
@@ -54,33 +54,63 @@ def get_config(config_dict: Dict) -> ServiceConfig:
 
 def get_vision_service(config_dict: Dict, reconfigure=True):
     service = TrackerService("test")
+
     cam = FakeCamera(CAMERA_NAME, img_path=IMG_PATH, use_ring_buffer=True)
     camera_name = cam.get_resource_name(CAMERA_NAME)
+
     detector = FakeDetectorVisionService(DETECTOR_NAME)
     detector_name = detector.get_resource_name(DETECTOR_NAME)
+
+    embedder = FakeEmbedderMLModel(EMBEDDER_NAME)
+    embedder_name = embedder.get_resource_name(EMBEDDER_NAME)
+
     cfg = get_config(config_dict)
     service.validate_config(cfg)
     if reconfigure:
         service.reconfigure(
-            cfg, dependencies={camera_name: cam, detector_name: detector}
+            cfg,
+            dependencies={
+                camera_name: cam,
+                detector_name: detector,
+                embedder_name: embedder,
+            },
         )
     return service
 
 
 class TestFaceReId:
+    @pytest_asyncio.fixture(autouse=True)
+    async def setup_service(self):
+        self.service = get_vision_service(WORKING_CONFIG_DICT, reconfigure=True)
+        yield
+        # Clean up after tests
+        await self.service.close()  # Close any open connections
+
     @pytest.mark.asyncio
-    async def test_person_reid(self):
-        service = get_vision_service(WORKING_CONFIG_DICT, reconfigure=True)
-        detections = await service.tracker.detector.detect(None)
+    async def test_detector(self):
+        # Test detection from vision service
+        img = await self.service.tracker.camera.get_image()
+        detections = await self.service.tracker.detector.detect(img)
         assert len(detections) == 2
         assert detections[0].category == "person"
         assert detections[1].category == "car"
-        print(detections)
-        await service.close()
 
-        # test if len(tracks) ==1
-        # track = tracks[0] test that track.re-id-label is alex
+    @pytest.mark.asyncio
+    async def test_embedder(self):
+        # Test embeddings from mlmodel service
+        img = await self.service.tracker.camera.get_image()
+        image_object = ImageObject(img)
+        detections = await self.service.tracker.detector.detect(img)
+        embeddings = await self.service.tracker.embedder.compute_features(
+            image_object, detections
+        )
+        assert len(embeddings) == 2
+        assert embeddings[0].shape == (512,)
+        assert embeddings[1].shape == (512,)
 
 
 if __name__ == "__main__":
-    asyncio.run(TestFaceReId().test_person_reid())
+    # Run all tests with pytest
+    pytest.main(
+        ["-xvs", __file__]
+    )  # verbose, stop after first failure, don't capture output

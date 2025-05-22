@@ -164,16 +164,35 @@ class FaceIdConfig:
         ).validate(config)
 
 
-class FeatureEncoderConfig:
+class EmbedderConfig:
     def __init__(self, config: ServiceConfig):
-        self.feature_extractor_name = StringAttribute(
-            field_name="feature_extractor_model",
-            default_value="osnet_ain_x1_0",
-            allowlist=["osnet_x0_25", "osnet_ain_x1_0"],
+        self.embedder_name = StringAttribute(
+            field_name="embedder_model",
+            default_value=None,
+        ).validate(config)
+
+        self.input_height = IntAttribute(
+            field_name="embedder_input_height",
+            default_value=112,
+        ).validate(config)
+
+        self.input_width = IntAttribute(
+            field_name="embedder_input_width",
+            default_value=112,
+        ).validate(config)
+
+        self.input_name = StringAttribute(
+            field_name="embedder_input_name",
+            default_value="input",
+        ).validate(config)
+
+        self.output_name = StringAttribute(
+            field_name="embedder_output_name",
+            default_value="output",
         ).validate(config)
 
         self.device = StringAttribute(
-            field_name="feature_encoder_device",
+            field_name="embedder_device",
             default_value="cuda",
             allowlist=["cpu", "cuda"],
         ).validate(config)
@@ -185,5 +204,5 @@ class TrackerConfig:
 
         self.tracker_config = TrackingConfig(config)
         self.detector_config = DetectorConfig(config)
-        self.encoder_config = FeatureEncoderConfig(config)
+        self.embedder_config = EmbedderConfig(config)
         self.face_id_config = FaceIdConfig(config)

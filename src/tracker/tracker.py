@@ -17,13 +17,14 @@ from viam.proto.service.vision import Detection
 from src.config.config import TrackerConfig
 from src.image.image import ImageObject
 from src.tracker.detector.detector import Detector
+from src.tracker.embedder.embedder import Embedder
 from src.tracker.track import Track
 
 # from src.tracker.encoder.feature_encoder import FeatureEncoder, get_encoder
 # from src.tracker.face_id.identifier import FaceIdentifier
 # from src.tracker.track import Track
 # from src.tracker.tracks_manager import TracksManager
-# from src.utils import log_cost_matrix, log_tracks_info
+from src.utils import log_cost_matrix, log_tracks_info
 
 LOGGER = getLogger(__name__)
 
@@ -34,6 +35,7 @@ class Tracker:
         cfg: TrackerConfig,
         camera: CameraClient,
         detector: Detector,
+        embedder: Embedder,
         debug: bool = False,
     ):
         """
@@ -54,6 +56,7 @@ class Tracker:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.detector: Detector = detector
+        self.embedder: Embedder = embedder
         self.tracks: Dict[str, Track] = {}
 
         self.track_candidates: List[Track] = []

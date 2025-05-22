@@ -16,6 +16,7 @@ from viam.proto.common import PointCloudObject, ResourceName
 from viam.proto.service.vision import Classification, Detection
 from viam.resource.base import ResourceBase
 from viam.resource.types import Model, ModelFamily
+from viam.services.mlmodel import MLModel, MLModelClient
 from viam.services.vision import CaptureAllResult, Vision, VisionClient
 from viam.utils import ValueTypes
 
@@ -24,6 +25,9 @@ from src.tracker.detector.custom_vision_service_detector import (
     CustomVisionServiceDetector,
 )
 from src.tracker.detector.torchvision_detector import TorchvisionDetector
+from src.tracker.embedder.custom_mlmodel_service_embedder import (
+    CustomMLModelServiceEmbedder,
+)
 from src.tracker.tracker import Tracker
 
 LOGGER = getLogger(__name__)
@@ -40,6 +44,7 @@ class TrackerService(Vision, Reconfigurable):
         super().__init__(name=name)
         self.camera: CameraClient = None
         self.detector: VisionClient = None
+        self.embedder: MLModelClient = None
         self.tracker = None
 
     @classmethod
@@ -74,12 +79,23 @@ class TrackerService(Vision, Reconfigurable):
             self.detector = CustomVisionServiceDetector(
                 tracker_cfg.detector_config, vision_service
             )
+        embedder_name = config.attributes.fields["embedder_name"].string_value
+        if not embedder_name:
+            raise ValueError("Embedder name is required")
+        else:
+            vision_service = dependencies[MLModel.get_resource_name(embedder_name)]
+            self.embedder = CustomMLModelServiceEmbedder(
+                tracker_cfg.embedder_config, vision_service
+            )
 
         if self.tracker is not None:
             create_task(self.stop_and_get_new_tracker(tracker_cfg))
         else:
             self.tracker = Tracker(
-                tracker_cfg, camera=self.camera, detector=self.detector
+                tracker_cfg,
+                camera=self.camera,
+                detector=self.detector,
+                embedder=self.embedder,
             )
             self.tracker.start()
 
