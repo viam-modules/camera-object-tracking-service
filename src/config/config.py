@@ -171,6 +171,13 @@ class EmbedderConfig:
             default_value=None,
         ).validate(config)
 
+        self.embedder_distance = StringAttribute(
+            field_name="embedder_distance",
+            default_value="cosine",
+            allowlist=["cosine", "euclidean", "manhattan"],
+        ).validate(config)
+
+        # NOT DEFINITIVE ARGUMENTS
         self.input_height = IntAttribute(
             field_name="embedder_input_height",
             default_value=112,

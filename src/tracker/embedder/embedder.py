@@ -19,6 +19,7 @@ class Embedder(ABC):
         Initializes the detector with a DetectorConfig object that contains configuration for the model.
         """
         self.cfg = cfg
+        self.distance = cfg.embedder_distance
         self.input_height = cfg.input_height
         self.input_width = cfg.input_width
         self.input_shape = (cfg.input_height, cfg.input_width)
