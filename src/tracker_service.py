@@ -214,34 +214,6 @@ class TrackerService(Vision, Reconfigurable):
         **kwargs,
     ):
         do_command_output = {}
-        relabel_cmd = command.get("relabel", None)
-        if relabel_cmd is not None:
-            do_command_output["relabel"] = self.tracker.relabel_tracks(relabel_cmd)
-
-        add_cmd = command.get("add", None)
-        if add_cmd is not None:
-            do_command_output["add"] = self.tracker.add_labeled_embedding(add_cmd)
-
-        delete_cmd = command.get("delete", None)
-        if delete_cmd is not None:
-            do_command_output["delete"] = self.tracker.delete_labeled_embedding(
-                delete_cmd
-            )
-
-        list_cmd = command.get("list", None)
-        if list_cmd:
-            do_command_output["list"] = self.tracker.list_objects()
-
-        list_current_cmd = command.get("list_current", None)
-        if list_current_cmd:
-            do_command_output["list_current"] = self.tracker.list_current()
-
-        recompute_embeddings = command.get("recompute_embeddings", None)
-        if recompute_embeddings:
-            do_command_output["recompute_embeddings"] = (
-                self.tracker.recompute_embeddings()
-            )
-
         return do_command_output
 
     async def close(self):

@@ -59,8 +59,6 @@ class Tracker:
 
         self.track_candidates: List[Track] = []
 
-        self.minimum_track_persistance: int = cfg.tracker_config.min_track_persistence
-
         self.category_count: Dict[str, int] = {}
 
         self.labeled_person_embeddings: Dict[str, List[torch.Tensor]] = {}
@@ -161,7 +159,6 @@ class Tracker:
                 dets.append(
                     track.get_detection(
                         crop_region=self.crop_region,
-                        min_persistence=self.minimum_track_persistance,
                         original_image_width=self.last_image.width,
                         original_image_height=self.last_image.height,
                     )
@@ -382,7 +379,7 @@ class Tracker:
 
         track_candidate.is_candidate = False
         track_id = self.generate_track_id(
-            track_candidate._get_label()
+            track_candidate._get_class_name()
         )  # for a track candidate, the label is the category
         track_candidate.change_track_id(track_id)
         self.tracks[track_id] = track_candidate
@@ -404,21 +401,6 @@ class Tracker:
                 # Optionally remove old tracks
                 if self.tracks[track_id].age > self.max_age_track:
                     del self.tracks[track_id]
-
-    def list_objects(self):
-        answer = []
-        for label, track_ids in self.track_ids_with_label.items():
-            for track_id in track_ids:
-                answer.append(self.generate_person_data(label=label, id=track_id))
-        return answer
-
-    def list_current(self):
-        answer = {}
-        for track_id in self.tracks:
-            track = self.tracks[track_id]
-            if track.is_detected():
-                answer[track_id] = track.get_all()
-        return answer
 
     @staticmethod
     def generate_person_data(label, id):

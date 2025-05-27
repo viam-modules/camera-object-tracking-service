@@ -33,13 +33,8 @@ class Track:
 
         self.label = label
 
-        self.label_from_reid: Optional[str] = None
-        self.conf_from_reid = 0
-
-        self.label_from_faceid: Optional[str] = None
-        self.conf_from_faceid: Optional[str] = None
-
         self.persistence: int = 0
+        self.min_persistence: int = 5  # TODO: talk with Khari about this
         self.is_candidate: bool = is_candidate
         self._is_detected: bool = True
 
@@ -134,33 +129,13 @@ class Track:
 
         return iou
 
-    def feature_distance(self, feature_vector):
-        """
-        Calculate the distance between this track's feature vector and another feature vector.
-
-        :param feature_vector: Feature vector to compare with.
-        :return: Distance (e.g., Euclidean distance).
-        """
-        return np.linalg.norm(self.feature_vector - feature_vector)
-
     def get_detection(
         self,
         crop_region,
-        min_persistence=None,
         original_image_width=None,
         original_image_height=None,
     ) -> Detection:
-        if self.is_candidate:
-            if min_persistence is None:
-                raise ValueError(
-                    "Need to pass persistence in argument to get track candidate"
-                )
-            class_name = self._get_label(min_persistence)
-        else:
-            class_name = self.track_id
-            label = self._get_label(min_persistence)
-            if label != self.track_id:
-                class_name += f"  (label: {label})"
+        class_name = self._get_class_name()
 
         # Convert bbox from cropped coordinates to original image coordinates
         x_min, y_min, x_max, y_max = self.bbox
@@ -185,40 +160,9 @@ class Track:
             class_name=class_name,
         )
 
-    def serialize(self):
-        return (
-            self.track_id,
-            self.bbox.tobytes(),
-            self.feature_vector.cpu().detach().numpy().tobytes(),
-        )
-
-    def add_label(self, label_from_reid):
-        self.label_from_reid = label_from_reid
-
-    def get_embedding(self):
-        return self.feature_vector
-
-    def relabel(self, new_label):
-        self.label = new_label
-
-    def relabel_reid_label(self, label: str):
-        self.label_from_reid = label
-
-    def relabel_faceid_label(self, label: str):
-        self.label_from_faceid = label
-
-    def has_label(self) -> bool:
-        return self.label is not None
-
-    def _get_label(self, min_persistence=None):
+    def _get_class_name(self):
         if self.is_candidate:
-            return self.progress_bar(self.persistence, min_persistence)
-        if self.label is not None:
-            return self.label
-        if self.label_from_faceid is not None:
-            return self.label_from_faceid
-        if self.label_from_reid is not None:
-            return self.label_from_reid
+            return self.progress_bar(self.persistence, self.min_persistence)
         return self.track_id
 
     def progress_bar(self, current_progress, min_persistence):
@@ -251,13 +195,3 @@ class Track:
 
     def is_detected(self):
         return self._is_detected
-
-    def get_all(self):
-        answer = {
-            "face_id_label": self.label_from_faceid,
-            "face_id_conf": self.conf_from_faceid,
-            "re_id_label": self.label_from_reid,
-            "re_id_conf": self.conf_from_reid,
-            "manual_label": self.label,
-        }
-        return answer

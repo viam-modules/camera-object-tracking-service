@@ -11,16 +11,11 @@ from src.config.attribute import (
 
 class TrackingConfig:
     def __init__(self, config: "ServiceConfig"):
-        self.min_track_persistence = IntAttribute(
-            field_name="min_track_persistence",
-            min_value=0,
-            default_value=4,
-        ).validate(config)
         self.lambda_value = FloatAttribute(
             field_name="lambda_value",
             min_value=0,
             max_value=1,
-            default_value=0.0005,
+            default_value=0.0005,  # TODO: change that when we choose our embedder
         ).validate(config)
         self.max_age_track = IntAttribute(
             field_name="max_age_track",
