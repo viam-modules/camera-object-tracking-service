@@ -35,25 +35,26 @@ class Embedder(ABC):
         pass
 
     @abstractmethod
-    def compute_distance(self, feature_vector_1, feature_vector_2, metric="cosine"):
+    def compute_distance(
+        self, feature_vector_1: torch.Tensor, feature_vector_2: torch.Tensor
+    ):
         """
         Compute pairwise distances between feature vectors using PyTorch.
 
         :param feature_vector_1: First feature vector (PyTorch tensor).
         :param feature_vector_2: Second feature vector (PyTorch tensor).
-        :param metric: The distance metric to use ('euclidean', 'cosine', 'manhattan').
         :return: Computed distance.
         """
-        if metric == "euclidean":
+        if self.distance == "euclidean":
             distance = torch.norm(feature_vector_1 - feature_vector_2, p=2)
-        elif metric == "cosine":
+        elif self.distance == "cosine":
             distance = 1 - torch.nn.functional.cosine_similarity(
                 feature_vector_1.unsqueeze(0), feature_vector_2.unsqueeze(0)
             )
-        elif metric == "manhattan":
+        elif self.distance == "manhattan":
             distance = torch.sum(torch.abs(feature_vector_1 - feature_vector_2))
         else:
-            raise ValueError(f"Unsupported metric '{metric}'")
+            raise ValueError(f"Unsupported metric '{self.distance}'")
         return distance.cpu().item()
 
     def crop_detections(

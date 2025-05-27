@@ -11,12 +11,6 @@ from src.config.attribute import (
 
 class TrackingConfig:
     def __init__(self, config: "ServiceConfig"):
-        self.re_id_threshold = FloatAttribute(
-            field_name="re_id_threshold",
-            min_value=0,
-            default_value=0.3,
-        ).validate(config)
-
         self.min_track_persistence = IntAttribute(
             field_name="min_track_persistence",
             min_value=0,
@@ -26,7 +20,7 @@ class TrackingConfig:
             field_name="lambda_value",
             min_value=0,
             max_value=1,
-            default_value=0.95,
+            default_value=0.0005,
         ).validate(config)
         self.max_age_track = IntAttribute(
             field_name="max_age_track",
@@ -34,16 +28,11 @@ class TrackingConfig:
             max_value=100000,
             default_value=1000,
         ).validate(config)
-        self.min_distance_threshold = FloatAttribute(
-            field_name="min_distance_threshold",
+        self.embedder_threshold = FloatAttribute(
+            field_name="embedder_threshold",
             min_value=0,
             max_value=1,
             default_value=0.3,
-        ).validate(config)
-        self.feature_distance_metric = StringAttribute(
-            field_name="feature_distance_metric",
-            default_value="cosine",
-            allowlist=["cosine", "euclidean"],
         ).validate(config)
 
         self.max_frequency = FloatAttribute(
@@ -59,23 +48,8 @@ class TrackingConfig:
             min_value=0,
         ).validate(config)
 
-        self.start_fresh = BoolAttribute(
-            field_name="start_fresh",
-            default_value=False,
-        ).validate(config)
-
-        self.save_to_db = BoolAttribute(
-            field_name="save_to_db",
-            default_value=True,
-        ).validate(config)
-
         self._start_background_loop = BoolAttribute(
             field_name="_start_background_loop", default_value=True
-        ).validate(config)
-
-        self.path_to_known_persons = StringAttribute(
-            field_name="path_to_known_persons",
-            default_value=None,
         ).validate(config)
 
         self.crop_region = DictAttribute(
@@ -116,51 +90,6 @@ class DetectorConfig:
 
         self._max_size_debug_directory = IntAttribute(
             field_name="_max_size_debug_directory", default_value=200
-        ).validate(config)
-
-
-class FaceIdConfig:
-    def __init__(self, config: ServiceConfig):
-        self.path_to_known_faces = StringAttribute(
-            field_name="path_to_known_faces",
-            default_value=None,
-        ).validate(config)
-
-        self.device = StringAttribute(
-            field_name="face_detector_device",
-            default_value="cpu",
-            allowlist=["cpu", "cuda"],
-        ).validate(config)
-
-        self.detector = StringAttribute(
-            field_name="face_detector_model",
-            default_value="ultraface_version-RFB-320-int8",
-        ).validate(config)
-
-        self.detector_threshold = FloatAttribute(
-            field_name="face_detection_threshold",
-            min_value=0.0,
-            max_value=1.0,
-            default_value=0.9,
-        ).validate(config)
-
-        self.feature_extractor = StringAttribute(
-            field_name="face_feature_extractor_model",
-            default_value="facenet",
-        ).validate(config)
-
-        self.cosine_id_threshold = FloatAttribute(
-            field_name="cosine_id_threshold",
-            min_value=0.0,
-            max_value=1.0,
-            default_value=0.3,
-        ).validate(config)
-
-        self.euclidean_id_threshold = FloatAttribute(
-            field_name="euclidean_id_threshold",
-            min_value=0.0,
-            max_value=1.0,
-            default_value=0.9,
         ).validate(config)
 
 
@@ -212,4 +141,3 @@ class TrackerConfig:
         self.tracker_config = TrackingConfig(config)
         self.detector_config = DetectorConfig(config)
         self.embedder_config = EmbedderConfig(config)
-        self.face_id_config = FaceIdConfig(config)

@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-import numpy as np
-
 from src.config.config import DetectorConfig
+from src.image.image import ImageObject
 from src.tracker.detector.detection import Detection
 
 
@@ -15,7 +14,9 @@ class Detector(ABC):
         self.cfg = cfg
 
     @abstractmethod
-    def detect(self, image: np.ndarray, visualize: bool = False) -> List[Detection]:
+    async def detect(
+        self, image: ImageObject, visualize: bool = False
+    ) -> List[Detection]:
         """
         Abstract method to be implemented by specific detector classes. Each detector must implement
         this method to detect objects in the provided image.

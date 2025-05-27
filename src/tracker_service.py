@@ -34,11 +34,9 @@ LOGGER = getLogger(__name__)
 
 
 class TrackerService(Vision, Reconfigurable):
-    """ReIDTracker is a subclass a Viam Vision Service"""
+    """TrackerService is a subclass a Viam Vision Service"""
 
-    MODEL: ClassVar[Model] = Model(
-        ModelFamily("viam", "vision"), "re-id-object-tracker"
-    )
+    MODEL: ClassVar[Model] = Model(ModelFamily("viam", "vision"), "tracker")
 
     def __init__(self, name: str):
         super().__init__(name=name)

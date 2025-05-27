@@ -35,7 +35,7 @@ class CustomVisionServiceDetector(Detector):
             List of Detection objects
         """
         # Get detections from the vision service
-        viam_detections = await self.vision_service.get_detections(None)
+        viam_detections = await self.vision_service.get_detections(image.viam_image)
 
         # Convert Viam detections to our custom Detection type
         detections = []

@@ -223,7 +223,7 @@ class Track:
 
     def progress_bar(self, current_progress, min_persistence):
         """
-        Generates an emoji-based progress bar.
+        Generates a progress bar.
 
         :param current_progress: The current progress level (integer)
         :param max_persistence: The maximum progress level

@@ -7,7 +7,6 @@ from typing import Dict, List
 
 import numpy as np
 import torch
-from PIL import Image
 from scipy.optimize import linear_sum_assignment
 from viam.components.camera import CameraClient
 from viam.logging import getLogger
@@ -47,9 +46,8 @@ class Tracker:
         """
         self.camera: CameraClient = camera
         self.lambda_value = cfg.tracker_config.lambda_value
-        self.distance_threshold = cfg.tracker_config.min_distance_threshold
+        self.distance_threshold = cfg.tracker_config.embedder_threshold
         self.max_age_track = cfg.tracker_config.max_age_track
-        self.distance = cfg.tracker_config.feature_distance_metric
         self.sleep_period = 1 / (cfg.tracker_config.max_frequency)
         self.crop_region = cfg.tracker_config.crop_region
 
@@ -66,9 +64,8 @@ class Tracker:
         self.category_count: Dict[str, int] = {}
 
         self.labeled_person_embeddings: Dict[str, List[torch.Tensor]] = {}
-        self.path_to_known_persons = cfg.tracker_config.path_to_known_persons
 
-        self.reid_threshold = cfg.tracker_config.re_id_threshold
+        self.embedder_threshold = cfg.tracker_config.embedder_threshold
 
         self.current_tracks_id = set()
         self.background_task = None
@@ -114,7 +111,7 @@ class Tracker:
                         continue
                 self.last_image = img
                 try:
-                    self.update(img)  # Update tracks
+                    await self.update(img)  # Update tracks
                 except Exception as e:
                     LOGGER.error(f"Error updating tracker: {e}")
                     await sleep(
@@ -174,7 +171,7 @@ class Tracker:
     async def is_new_object_detected(self):
         return self.new_object_event.is_set()
 
-    def update(
+    async def update(
         self,
         img: ImageObject,
     ):
@@ -185,14 +182,13 @@ class Tracker:
         """
         self.clear_detected_track()
         # Get new detections
-        detections = self.detector.detect(img)
+        detections = await self.detector.detect(img)
 
         # Keep track of the old tracks, updated and unmatched tracks
         all_old_tracks_id = set(self.tracks.keys())
         updated_tracks_ids = set()
         unmatched_detections_idx = set(range(len(detections)))
         new_tracks_ids = set()
-        current_track_candidates = []
 
         if not detections:
             self.current_tracks_id = set()
@@ -206,7 +202,7 @@ class Tracker:
             return
 
         # Compute feature vectors for the current detections
-        features_vectors = self.encoder.compute_features(img, detections)
+        features_vectors = await self.embedder.compute_features(img, detections)
 
         # Solve the linear assignment problem to find the best matching
         row_indices, col_indices, cost_matrix = self.get_matching_tracks(
@@ -241,7 +237,6 @@ class Tracker:
                         detection=detection,
                         feature_vector=feature_vector,
                     )
-                    current_track_candidates.append(len(self.track_candidates) - 1)
             else:
                 unmatched_detections = [detections[i] for i in unmatched_detections_idx]
                 track_candidate_idx, unmatched_detection_idx, cost_matrix = (
@@ -288,18 +283,17 @@ class Tracker:
                     promoted_track_candidates,
                     reverse=True,
                 ):
-                    del self.track_candidates[track_candidate_id]
+                    del self.track_candidates[
+                        track_candidate_id
+                    ]  # delete track candidate that were not found again
 
-                # delete track candidate that were not found again
-                # TODO: give track candidate multiple frame before being deleted
                 self.track_candidates = [
                     track_candidate
                     for track_candidate in self.track_candidates
                     if track_candidate.is_detected()
-                ]
+                ]  # mark track candidates that were not found again
 
         self.current_tracks_id = updated_tracks_ids.union(new_tracks_ids)
-        self.current_track_candidates = current_track_candidates
 
         self.increment_age_and_delete_tracks(updated_tracks_ids)
 
@@ -332,7 +326,7 @@ class Tracker:
             track = tracks[track_id]
             for j, detection in enumerate(detections):
                 iou_score = track.iou(detection.bbox)
-                feature_dist = self.encoder.compute_distance(
+                feature_dist = self.embedder.compute_distance(
                     track.feature_vector, feature_vectors[j]
                 )
                 # Cost function: lambda * feature distance + (1 - lambda) * (1 - IoU)
@@ -353,7 +347,7 @@ class Tracker:
         for i, track in enumerate(self.track_candidates):
             for j, detection in enumerate(detections):
                 iou_score = track.iou(detection.bbox)
-                feature_dist = self.encoder.compute_distance(
+                feature_dist = self.embedder.compute_distance(
                     track.feature_vector, features_vectors[j]
                 )
                 # Cost function: lambda * feature distance + (1 - lambda) * (1 - IoU)
@@ -393,8 +387,6 @@ class Tracker:
         track_candidate.change_track_id(track_id)
         self.tracks[track_id] = track_candidate
 
-        # Add new track_id to the track_table
-        self.track_ids_with_label[track_id] = [track_id]
         return track_id
 
     def clear_detected_track(self):
@@ -412,7 +404,6 @@ class Tracker:
                 # Optionally remove old tracks
                 if self.tracks[track_id].age > self.max_age_track:
                     del self.tracks[track_id]
-                    # TODO : also delete from track_ids_with_label ?
 
     def list_objects(self):
         answer = []
@@ -427,12 +418,6 @@ class Tracker:
             track = self.tracks[track_id]
             if track.is_detected():
                 answer[track_id] = track.get_all()
-        return answer
-
-    def recompute_embeddings(self):
-        self.face_identifier.compute_known_embeddings()
-        self.compute_known_persons_embeddings()
-        answer = "embeddings successfully recomputed"
         return answer
 
     @staticmethod

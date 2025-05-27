@@ -78,10 +78,13 @@ def get_vision_service(config_dict: Dict, reconfigure=True):
     return service
 
 
-class TestFaceReId:
+class TestTracker:
     @pytest_asyncio.fixture(autouse=True)
     async def setup_service(self):
         self.service = get_vision_service(WORKING_CONFIG_DICT, reconfigure=True)
+        self.img = await self.service.tracker.camera.get_image()
+        self.image_object = ImageObject(self.img)
+        self.service.tracker.last_image = self.image_object
         yield
         # Clean up after tests
         await self.service.close()  # Close any open connections
@@ -89,8 +92,8 @@ class TestFaceReId:
     @pytest.mark.asyncio
     async def test_detector(self):
         # Test detection from vision service
-        img = await self.service.tracker.camera.get_image()
-        detections = await self.service.tracker.detector.detect(img)
+        image_object = ImageObject(self.img)
+        detections = await self.service.tracker.detector.detect(image_object)
         assert len(detections) == 2
         assert detections[0].category == "person"
         assert detections[1].category == "car"
@@ -98,15 +101,30 @@ class TestFaceReId:
     @pytest.mark.asyncio
     async def test_embedder(self):
         # Test embeddings from mlmodel service
-        img = await self.service.tracker.camera.get_image()
-        image_object = ImageObject(img)
-        detections = await self.service.tracker.detector.detect(img)
+        detections = await self.service.tracker.detector.detect(self.image_object)
         embeddings = await self.service.tracker.embedder.compute_features(
-            image_object, detections
+            self.image_object, detections
         )
         assert len(embeddings) == 2
         assert embeddings[0].shape == (512,)
         assert embeddings[1].shape == (512,)
+
+    @pytest.mark.asyncio
+    async def test_tracker(self):
+        await self.service.tracker.update(self.image_object)
+        dets = self.service.tracker.get_current_detections()
+        assert len(dets) == 2
+
+    @pytest.mark.asyncio
+    async def test_get_detections_from_camera(self):
+        for i in range(self.service.tracker.minimum_track_persistance + 2):
+            await self.service.tracker.update(self.image_object)
+        dets = await self.service.get_detections_from_camera(
+            camera_name=CAMERA_NAME, timeout=0, extra=None
+        )
+        assert len(dets) == 2
+        assert dets[0].class_name.startswith("person")
+        assert dets[1].class_name.startswith("car")
 
 
 if __name__ == "__main__":
