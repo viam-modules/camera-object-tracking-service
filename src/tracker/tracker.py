@@ -64,7 +64,7 @@ class Tracker:
         self.labeled_person_embeddings: Dict[str, List[torch.Tensor]] = {}
 
         self.embedder_threshold = cfg.tracker_config.embedder_threshold
-
+        self.minimum_track_persistance = 5  # TODO: talk with Khari about this
         self.current_tracks_id = set()
         self.background_task = None
         self.new_object_event = Event()
@@ -179,7 +179,11 @@ class Tracker:
         """
         self.clear_detected_track()
         # Get new detections
-        detections = await self.detector.detect(img)
+        try:
+            detections = await self.detector.detect(img)
+        except Exception as e:
+            LOGGER.error(f"Error detecting objects: {e}")
+            return
 
         # Keep track of the old tracks, updated and unmatched tracks
         all_old_tracks_id = set(self.tracks.keys())
@@ -199,7 +203,11 @@ class Tracker:
             return
 
         # Compute feature vectors for the current detections
-        features_vectors = await self.embedder.compute_features(img, detections)
+        try:
+            features_vectors = await self.embedder.compute_features(img, detections)
+        except Exception as e:
+            LOGGER.error(f"Error computing feature vectors: {e}")
+            return
 
         # Solve the linear assignment problem to find the best matching
         row_indices, col_indices, cost_matrix = self.get_matching_tracks(

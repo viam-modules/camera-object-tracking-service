@@ -21,13 +21,16 @@ from viam.services.vision import CaptureAllResult, Vision, VisionClient
 from viam.utils import ValueTypes
 
 from src.config.config import TrackerConfig
+from src.test.fake_embedder_ml_model_service import FakeEmbedderMLModel
 from src.tracker.detector.custom_vision_service_detector import (
     CustomVisionServiceDetector,
 )
+from src.tracker.detector.detector import Detector
 from src.tracker.detector.torchvision_detector import TorchvisionDetector
 from src.tracker.embedder.custom_mlmodel_service_embedder import (
     CustomMLModelServiceEmbedder,
 )
+from src.tracker.embedder.embedder import Embedder
 from src.tracker.tracker import Tracker
 
 LOGGER = getLogger(__name__)
@@ -36,13 +39,15 @@ LOGGER = getLogger(__name__)
 class TrackerService(Vision, Reconfigurable):
     """TrackerService is a subclass a Viam Vision Service"""
 
-    MODEL: ClassVar[Model] = Model(ModelFamily("viam", "vision"), "tracker")
+    MODEL: ClassVar[Model] = Model(
+        ModelFamily("viam", "vision"), "camera-object-tracking-service"
+    )
 
     def __init__(self, name: str):
         super().__init__(name=name)
         self.camera: CameraClient = None
-        self.detector: VisionClient = None
-        self.embedder: MLModelClient = None
+        self.detector: Detector = None
+        self.embedder: Embedder = None
         self.tracker = None
 
     @classmethod
@@ -58,9 +63,19 @@ class TrackerService(Vision, Reconfigurable):
     @classmethod
     def validate_config(cls, config: ServiceConfig) -> Sequence[str]:
         """Validate config and returns a list of dependencies."""
+        dependencies = []
         camera_name = config.attributes.fields["camera_name"].string_value
+        dependencies.append(camera_name)
+        detector_name = config.attributes.fields["detector_name"].string_value
+        if detector_name:
+            dependencies.append(detector_name)
+        embedder_name = config.attributes.fields["embedder_name"].string_value
+        if embedder_name:
+            dependencies.append(embedder_name)
+
+        # validate the config
         _ = TrackerConfig(config)
-        return [camera_name]
+        return dependencies
 
     def reconfigure(
         self, config: ServiceConfig, dependencies: Mapping[ResourceName, ResourceBase]
@@ -79,11 +94,17 @@ class TrackerService(Vision, Reconfigurable):
             )
         embedder_name = config.attributes.fields["embedder_name"].string_value
         if not embedder_name:
-            raise ValueError("Embedder name is required")
-        else:
-            vision_service = dependencies[MLModel.get_resource_name(embedder_name)]
+            LOGGER.warning(
+                "No embedder name provided, using default embedder"
+            )  # TODO: change this when we have a default embedder
+            ml_model_service = FakeEmbedderMLModel("FAKE_NAME")
             self.embedder = CustomMLModelServiceEmbedder(
-                tracker_cfg.embedder_config, vision_service
+                tracker_cfg.embedder_config, ml_model_service
+            )
+        else:
+            ml_model_service = dependencies[MLModel.get_resource_name(embedder_name)]
+            self.embedder = CustomMLModelServiceEmbedder(
+                tracker_cfg.embedder_config, ml_model_service
             )
 
         if self.tracker is not None:
