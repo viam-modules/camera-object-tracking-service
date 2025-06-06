@@ -12,11 +12,10 @@ class Detector(ABC):
         Initializes the detector with a DetectorConfig object that contains configuration for the model.
         """
         self.cfg = cfg
+        self.chosen_labels = cfg.chosen_labels
 
     @abstractmethod
-    async def detect(
-        self, image: ImageObject, visualize: bool = False
-    ) -> List[Detection]:
+    async def detect(self, image: ImageObject) -> List[Detection]:
         """
         Abstract method to be implemented by specific detector classes. Each detector must implement
         this method to detect objects in the provided image.

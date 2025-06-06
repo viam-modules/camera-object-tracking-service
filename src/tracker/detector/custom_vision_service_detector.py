@@ -20,7 +20,6 @@ class CustomVisionServiceDetector(Detector):
         """
         super().__init__(cfg)
         self.vision_service = vision_service
-        self.chosen_labels = cfg.chosen_labels
 
     async def detect(
         self, image: ImageObject, visualize: bool = False

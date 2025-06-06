@@ -26,28 +26,12 @@ ssl._create_default_https_context = ssl._create_unverified_context
 class TorchvisionDetector(Detector):
     def __init__(self, cfg: DetectorConfig):
         super().__init__(cfg)
-        if cfg.model_name == "fasterrcnn_mobilenet_v3_large_320_fpn":
-            weights = FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.COCO_V1
-            self.model = fasterrcnn_mobilenet_v3_large_320_fpn(
-                weights=weights,
-                box_score_thresh=cfg.threshold,
-                num_classes=91,
-            )
-        elif cfg.model_name == "fasterrcnn_mobilenet_v3_large_fpn":
-            weights = FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1
-            self.model = fasterrcnn_mobilenet_v3_large_fpn(
-                weights=weights,
-                box_score_thresh=cfg.threshold,
-                num_classes=91,
-            )
-
-        else:
-            raise ValueError(
-                "Supported torchvision detector are 'fasterrcnn_mobilenet_v3_large_320_fpn' or  'fasterrcnn_mobilenet_v3_large_fpn'"
-            )
-
+        weights = FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1
+        self.model = fasterrcnn_mobilenet_v3_large_fpn(
+            weights=weights,
+            num_classes=91,
+        )
         self.categories = weights.meta["categories"]
-        self.threshold = cfg.threshold  # TODO: do it in the detector super class
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
         self.model.eval()
@@ -65,7 +49,7 @@ class TorchvisionDetector(Detector):
                 os.makedirs(self._path_to_debug_directory)
             self._max_size_debug_directory = cfg._max_size_debug_directory
 
-    def detect(self, image: ImageObject, visualize: bool = False) -> List[Detection]:
+    async def detect(self, image: ImageObject) -> List[Detection]:
         preprocessed_image = self.transform(image.uint8_tensor)
         batch = [preprocessed_image]
 
@@ -111,9 +95,13 @@ class TorchvisionDetector(Detector):
         for i in range(len(boxes)):
             label_idx = labels[i].item()
             score = scores[i].item()
-            if label_idx == 1 and score > self.threshold:
+            category = self.categories[label_idx]
+
+            # Check if we have a threshold for this class and if confidence exceeds it
+            if self.chosen_labels is None or (
+                category in self.chosen_labels and score > self.chosen_labels[category]
+            ):
                 bbox = list(map(int, boxes[i].tolist()))
-                category = self.categories[label_idx]
                 detections.append(Detection(bbox, score, category))
 
         return detections
