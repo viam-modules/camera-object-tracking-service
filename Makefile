@@ -1,4 +1,4 @@
-.PHONY: setup clean pyinstaller clean-pyinstaller onnxruntime-gpu-wheel pytorch-wheel torchvision-wheel
+.PHONY: setup clean pyinstaller clean-pyinstaller
 
 MODULE_DIR=$(shell pwd)
 BUILD=$(MODULE_DIR)/build
@@ -24,14 +24,19 @@ PYINSTALLER_DISTPATH=$(BUILD)/pyinstaller_dist
 $(VENV_DIR):
 	@echo "Building python venv"
 	# sudo apt install python3.10-venv
-	# sudo apt install python3-pip
+	# sudo apt install python3-pip             
 	python3 -m venv $(VENV_DIR)
 
 
 setup: $(VENV_DIR)
 	@echo "Installing requirements"
-	source $(VENV_DIR)/bin/activate
-	pip install -r $(REQUIREMENTS)
+	source $(VENV_DIR)/bin/activate &&pip install -r $(REQUIREMENTS)
+
+pyinstaller: $(PYINSTALLER_DISTPATH)/main
+
+$(PYINSTALLER_DISTPATH)/main: setup
+	$(PYTHON) -m PyInstaller --workpath "$(PYINSTALLER_WORKPATH)" --distpath "$(PYINSTALLER_DISTPATH)" src/main.py --noconfirm
+
 
 clean:
 	rm -rf $(BUILD)
