@@ -14,9 +14,13 @@ class Attribute:
         self.required = required
         self.default_value = default_value
 
-    def validate(self, config: "ServiceConfig", value=None):
-        if value is not None:
-            return value
+    def validate(self, config: "ServiceConfig"):
+        """
+        Validate if the attribute is present in the config and error if it is not and is required.
+        Returns the value of the attribute if it is present.
+        """
+        # if value is not None:
+        #     return value
         value = config.attributes.fields.get(self.field_name, self.default_value)
         if self.required and value is None:
             raise ValueError(
@@ -38,8 +42,8 @@ class IntAttribute(Attribute):
         self.max_value = max_value
         super().__init__(field_name, required, default_value)
 
-    def validate(self, config: "ServiceConfig", value=None):
-        value = super().validate(config, value)
+    def validate(self, config: "ServiceConfig"):
+        value = super().validate(config)
         if not isinstance(value, (float, int)):
             if not hasattr(value, "number_value"):
                 raise ValueError(
@@ -74,8 +78,8 @@ class FloatAttribute(Attribute):
         self.max_value = max_value
         super().__init__(field_name, required, default_value)
 
-    def validate(self, config: "ServiceConfig", value=None):
-        value = super().validate(config, value)
+    def validate(self, config: "ServiceConfig"):
+        value = super().validate(config)
         if not isinstance(value, (float, int)):
             if not hasattr(value, "number_value"):
                 raise ValueError(
@@ -105,8 +109,8 @@ class StringAttribute(Attribute):
         self.allowlist = allowlist
         super().__init__(field_name, required, default_value)
 
-    def validate(self, config: "ServiceConfig", value=None):
-        value = super().validate(config, value)
+    def validate(self, config: "ServiceConfig"):
+        value = super().validate(config)
         if value is None:
             return value
         if not isinstance(value, str):  # if it's not the default value
@@ -138,8 +142,8 @@ class BoolAttribute(Attribute):
     ):
         super().__init__(field_name, required, default_value)
 
-    def validate(self, config: "ServiceConfig", value=None):
-        value = super().validate(config, value)
+    def validate(self, config: "ServiceConfig"):
+        value = super().validate(config)
         if not isinstance(value, bool):  # if it's not the default value
             if not hasattr(
                 value, "bool_value"
@@ -165,14 +169,57 @@ class DictAttribute(Attribute):
         self.fields = fields or []
         super().__init__(field_name, required, default_value)
 
-    def validate(self, config: "ServiceConfig", value=None):
+    def validate(self, config: "ServiceConfig"):
         value = super().validate(config)
         if value is None:
             return value
         value = dict(value.struct_value.fields)
         for attribute in self.fields:
+            if not isinstance(attribute, Attribute):
+                raise ValueError(
+                    f"Expected Attribute objects for '{self.field_name}', got {type(attribute).__name__}"
+                )
             value[attribute.field_name] = attribute.validate(
                 config, value[attribute.field_name]
             )
 
         return value
+
+
+class ChosenLabelsAttribute(Attribute):
+    def __init__(
+        self,
+        field_name: str = "chosen_labels",
+        required: bool = False,
+        default_value: Optional[dict] = None,
+    ):
+        super().__init__(field_name, required, default_value)
+
+    def validate(self, config: "ServiceConfig"):
+        """This should return a dict of label: confidence_threshold"""
+        value = super().validate(config)
+        if value is None:
+            return value
+        value = dict(value.struct_value.fields)
+        chosen_labels = {}
+        for label, confidence_threshold in value.items():
+            if not isinstance(label, str):  # if it's not the default value
+                if not hasattr(
+                    label, "string_value"
+                ):  # if it's from the config but the wrong kind
+                    raise ValueError(
+                        f"Expected string for '{self.field_name}', got {type(label).__name__}"
+                    )
+            # label = str(label.string_value)
+            if not isinstance(
+                confidence_threshold, float
+            ):  # if it's not the default value
+                if not hasattr(
+                    confidence_threshold, "number_value"
+                ):  # if it's from the config but the wrong kind
+                    raise ValueError(
+                        f"Expected float for '{self.field_name}', got {type(confidence_threshold).__name__}"
+                    )
+            confidence_threshold = float(confidence_threshold.number_value)
+            chosen_labels[label] = confidence_threshold
+        return chosen_labels

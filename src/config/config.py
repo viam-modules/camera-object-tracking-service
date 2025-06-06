@@ -2,6 +2,7 @@ from viam.proto.app.robot import ServiceConfig
 
 from src.config.attribute import (
     BoolAttribute,
+    ChosenLabelsAttribute,
     DictAttribute,
     FloatAttribute,
     IntAttribute,
@@ -63,16 +64,16 @@ class DetectorConfig:
     def __init__(self, config: "ServiceConfig"):
         self.detector_name = StringAttribute(
             field_name="detector_name",
-            default_value="None",
+            default_value=None,
         ).validate(config)
-        self.chosen_labels = DictAttribute(
+        self.chosen_labels = ChosenLabelsAttribute(
             field_name="chosen_labels",
             default_value=None,
         ).validate(config)
         self.device = StringAttribute(
             field_name="detector_device",
             default_value="cpu",
-            allowlist=["cpu", "cuda"],
+            allowlist=["cpu", "cuda"],  # TODO: can add MPS backend here if we want
         ).validate(config)
         self._enable_debug_tools = BoolAttribute(
             field_name="_enable_debug_tools", default_value=False
