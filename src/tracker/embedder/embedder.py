@@ -34,7 +34,6 @@ class Embedder(ABC):
         """
         pass
 
-    @abstractmethod
     def compute_distance(
         self, feature_vector_1: torch.Tensor, feature_vector_2: torch.Tensor
     ):

@@ -30,7 +30,7 @@ class FakeEmbedderMLModel(MLModel):
         Returns:
             Dictionary containing mock embedding tensor
         """
-        return {"embedding": self._mock_embedding}
+        return {"output": self._mock_embedding}
 
     async def metadata(
         self,
