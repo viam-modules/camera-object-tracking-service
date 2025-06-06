@@ -27,7 +27,6 @@ class Track:
         self.predicted_bbox = np.array(bbox)
         self.feature_vector = feature_vector
         self.age = 0  # Time since the last update
-        self.history = [np.array(bbox)]  # Stores past bounding boxes for this track
         self.velocity = np.array([0, 0, 0, 0])  # Initial velocity (no motion)
         self.distance = distance
 
@@ -64,7 +63,6 @@ class Track:
         self.bbox = bbox
         self.feature_vector = feature_vector
         self.age = 0
-        self.history.append(bbox)
         self.predicted_bbox = self.predict()
 
     def predict(self):
