@@ -1,0 +1,17 @@
+{
+  "$schema": "https://dl.viam.dev/module.schema.json",
+  "module_id": "viam:camera-object-tracking-service",
+  "visibility": "public",
+  "url": "https://github.com/viam-modules/camera-object-tracking-service",
+  "description": "A module for tracking objects in a camera stream.",
+  "models": [
+    {
+      "api": "rdk:service:vision",
+      "model": "viam:vision:camera-object-tracking-service",
+      "short_description": "A module for tracking objects in a camera stream."
+    }
+  ],
+  "applications": null,
+  "entrypoint": "main",
+  "first_run": ""
+}

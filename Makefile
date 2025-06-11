@@ -35,9 +35,15 @@ setup: $(VENV_DIR)
 pyinstaller: $(PYINSTALLER_DISTPATH)/main
 
 $(PYINSTALLER_DISTPATH)/main: setup
-	$(PYTHON) -m PyInstaller --workpath "$(PYINSTALLER_WORKPATH)" --distpath "$(PYINSTALLER_DISTPATH)" src/main.py --noconfirm
+	$(PYTHON) -m PyInstaller --workpath "$(PYINSTALLER_WORKPATH)" --distpath "$(PYINSTALLER_DISTPATH)" main.spec
 
+archive.tar.gz: $(PYINSTALLER_DISTPATH)/main
+	cp $(PYINSTALLER_DISTPATH)/main/main ./
+	tar -czvf archive.tar.gz main meta.json
 
 clean:
 	rm -rf $(BUILD)
 	rm -rf $(VENV_DIR)
+clean-pyinstaller:
+	rm -rf $(PYINSTALLER_WORKPATH)
+	rm -rf $(PYINSTALLER_DISTPATH)
