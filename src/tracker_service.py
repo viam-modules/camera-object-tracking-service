@@ -221,7 +221,7 @@ class TrackerService(Vision, Reconfigurable):
     async def get_detections_from_camera(
         self, camera_name: str, *, extra: Mapping[str, Any], timeout: float
     ) -> List[Detection]:
-        if not camera_name == self.camera_name:
+        if camera_name != self.camera_name and camera_name != "":
             raise ValueError(
                 "The camera_name doesn't match the camera_name configured for the tracker."
             )

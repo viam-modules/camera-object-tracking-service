@@ -32,7 +32,7 @@ WORKING_CONFIG_DICT = {
     "detector_name": DETECTOR_NAME,
     "embedder_name": EMBEDDER_NAME,
     "_start_background_loop": False,
-    "embedder_output_name": "embedding",
+    "embedder_output_name": "output",
 }
 
 
@@ -121,6 +121,17 @@ class TestTracker:
             await self.service.tracker.update(self.image_object)
         dets = await self.service.get_detections_from_camera(
             camera_name=CAMERA_NAME, timeout=0, extra=None
+        )
+        assert len(dets) == 2
+        assert dets[0].class_name.startswith("person")
+        assert dets[1].class_name.startswith("car")
+
+    @pytest.mark.asyncio
+    async def test_get_detections_from_camer_with_empty_camera_name(self):
+        for i in range(self.service.tracker.minimum_track_persistance + 2):
+            await self.service.tracker.update(self.image_object)
+        dets = await self.service.get_detections_from_camera(
+            camera_name="", timeout=0, extra=None
         )
         assert len(dets) == 2
         assert dets[0].class_name.startswith("person")
