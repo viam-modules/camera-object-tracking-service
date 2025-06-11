@@ -38,11 +38,13 @@ class Tracker:
         debug: bool = False,
     ):
         """
-        Initialize the Tracker with a Detector for person detection and tracking logic.
+        Initialize the Tracker with configuration, camera, detector, and embedder.
 
-        :param model_path: Path to the TFLite model file for the Detector.
-        :param iou_threshold: Threshold for IoU matching.
-        :param feature_threshold: Threshold for re-id feature matching.
+        :param cfg: TrackerConfig containing all tracker configuration parameters.
+        :param camera: CameraClient for capturing images.
+        :param detector: Detector for object detection.
+        :param embedder: Embedder for computing feature embeddings.
+        :param debug: Enable debug mode for additional logging.
         """
         self.camera: CameraClient = camera
         self.lambda_value = cfg.tracker_config.lambda_value
