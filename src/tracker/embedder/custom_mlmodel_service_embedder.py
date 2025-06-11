@@ -2,12 +2,15 @@ from typing import List
 
 import numpy as np
 import torch
+from viam.logging import getLogger
 from viam.services.mlmodel import MLModel
 
 from src.config.config import EmbedderConfig
 from src.image.image import ImageObject
 from src.tracker.detector.detection import Detection
 from src.tracker.embedder.embedder import Embedder
+
+LOGGER = getLogger(__name__)
 
 
 class CustomMLModelServiceEmbedder(Embedder):
@@ -45,9 +48,14 @@ class CustomMLModelServiceEmbedder(Embedder):
             img_np = cropped_image.numpy()
 
             # Get embedding from MLModel
-            result = await self.ml_model.infer({self.input_name: img_np})
+            try:
+                result = await self.ml_model.infer({self.input_name: img_np})
+            except Exception as e:
+                LOGGER.error(
+                    f"Error getting embedding from MLModel service {self.ml_model.name}: {e}"
+                )
+                return []
             embedding = result[self.output_name]
-
             features.append(torch.from_numpy(embedding))
 
         return features

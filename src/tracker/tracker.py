@@ -210,7 +210,11 @@ class Tracker:
         except Exception as e:
             LOGGER.error(f"Error computing feature vectors: {e}")
             return
-
+        if len(features_vectors) != len(detections):
+            LOGGER.error(
+                f"Number of feature vectors ({len(features_vectors)}) does not match number of detections ({len(detections)})"
+            )
+            return
         # Solve the linear assignment problem to find the best matching
         row_indices, col_indices, cost_matrix = self.get_matching_tracks(
             tracks=self.tracks, detections=detections, feature_vectors=features_vectors
