@@ -412,10 +412,6 @@ class Tracker:
                 if self.tracks[track_id].age > self.max_age_track:
                     del self.tracks[track_id]
 
-    @staticmethod
-    def generate_person_data(label, id):
-        return {"label": label, "id": id, "renamed": (id != label)}
-
     def generate_track_id(self, category):
         """
         Generate a unique track ID based on the category and current date/time.
