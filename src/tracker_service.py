@@ -16,8 +16,8 @@ from viam.proto.common import PointCloudObject, ResourceName
 from viam.proto.service.vision import Classification, Detection
 from viam.resource.base import ResourceBase
 from viam.resource.types import Model, ModelFamily
-from viam.services.mlmodel import MLModel, MLModelClient
-from viam.services.vision import CaptureAllResult, Vision, VisionClient
+from viam.services.mlmodel import MLModel
+from viam.services.vision import CaptureAllResult, Vision
 from viam.utils import ValueTypes
 
 from src.config.config import TrackerConfig
@@ -131,7 +131,7 @@ class TrackerService(Vision, Reconfigurable):
         timeout: Optional[float] = None,
     ) -> Vision.Properties:
         return Vision.Properties(
-            classifications_supported=True,
+            classifications_supported=False,
             detections_supported=True,
             object_point_clouds_supported=False,
         )
@@ -156,24 +156,11 @@ class TrackerService(Vision, Reconfigurable):
         if return_image:
             img = await self.camera.get_image(mime_type=CameraMimeType.JPEG)
 
-        classifications = None
-        if return_classifications:
-            if await self.tracker.is_new_object_detected():
-                classifications = [
-                    Classification(class_name="new_object_detected", confidence=1)
-                ]
-
         detections = None
         if return_detections:
             detections = self.tracker.get_current_detections()
 
-        # do_cmd_res = None
-        # if extra is not None:
-        #     do_cmd_res = await self.do_command(extra)
-
-        return CaptureAllResult(
-            image=img, classifications=classifications, detections=detections
-        )
+        return CaptureAllResult(image=img, detections=detections)
 
     async def get_object_point_clouds(
         self,
@@ -212,12 +199,7 @@ class TrackerService(Vision, Reconfigurable):
         extra: Optional[Mapping[str, Any]] = None,
         timeout: Optional[float] = None,
     ) -> List[Classification]:
-        if not camera_name == self.camera_name:
-            raise ValueError(
-                "The camera_name doesn't match the camera_name configured for the tracker."
-            )
-        if await self.tracker.is_new_object_detected():
-            return [Classification(class_name="new_object_detected", confidence=1)]
+        return NotImplementedError
 
     async def get_detections_from_camera(
         self, camera_name: str, *, extra: Mapping[str, Any], timeout: float

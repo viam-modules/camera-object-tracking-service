@@ -69,10 +69,6 @@ class Tracker:
         self.minimum_track_persistance = 5  # TODO: talk with Khari about this
         self.current_tracks_id = set()
         self.background_task = None
-        self.new_object_event = Event()
-        self.new_object_notifier = NewObjectNotifier(
-            self.new_object_event, cfg.tracker_config.cooldown_period
-        )
         self.stop_event = Event()
 
         self.debug = debug
@@ -91,7 +87,6 @@ class Tracker:
         Stop the background loop by setting the stop event.
         """
         self.stop_event.set()
-        self.new_object_notifier.close()
         try:
             if self.background_task is not None:
                 await self.background_task  # Wait for the background task to finish
@@ -166,9 +161,6 @@ class Tracker:
                     )
                 )
         return dets
-
-    async def is_new_object_detected(self):
-        return self.new_object_event.is_set()
 
     async def update(
         self,
@@ -308,10 +300,6 @@ class Tracker:
 
         self.increment_age_and_delete_tracks(updated_tracks_ids)
 
-        # Set the new_object_event if new tracks were found
-        if len(new_tracks_ids) > 0:
-            self.new_object_notifier.notify_new_object()
-
         self.count += 1
         if self.debug:
             log_tracks_info(
@@ -438,44 +426,3 @@ class Tracker:
         track_id = f"{category}_{count}_{timestamp}"
 
         return track_id
-
-
-class NewObjectNotifier:
-    def __init__(self, new_object_event: Event, cooldown_period_s: int):
-        """
-        Initialize the notifier with a cooldown period.
-
-        :param cooldown_seconds: Time in seconds for the cooldown period.
-        """
-        self.cooldown_seconds = cooldown_period_s
-        self.new_object_event = new_object_event
-        self.cooldown_task = None
-
-    def close(self):
-        self.new_object_event.clear()
-        if self.cooldown_task is not None:
-            self.cooldown_task.cancel()
-
-    def notify_new_object(self):
-        """
-        Notify that a new object has been detected and restart the cooldown.
-        """
-        # Set the event to notify about the new object
-        self.new_object_event.set()
-
-        # Cancel any existing cooldown task
-        if self.cooldown_task is not None:
-            self.cooldown_task.cancel()
-
-        # Start a new cooldown task
-        self.cooldown_task = asyncio.create_task(self._clear_event_after_cooldown())
-
-    async def _clear_event_after_cooldown(self):
-        """
-        Clear the event after the cooldown period.
-        """
-        try:
-            await asyncio.sleep(self.cooldown_seconds)
-            self.new_object_event.clear()
-        except asyncio.CancelledError:
-            pass

@@ -38,12 +38,6 @@ class TrackingConfig:
             max_value=100,
         ).validate(config)
 
-        self.cooldown_period = FloatAttribute(
-            field_name="cooldown_period_s",
-            default_value=5,
-            min_value=0,
-        ).validate(config)
-
         self._start_background_loop = BoolAttribute(
             field_name="_start_background_loop", default_value=True
         ).validate(config)
