@@ -86,6 +86,7 @@ class TrackerService(Vision, Reconfigurable):
         detector_name = config.attributes.fields["detector_name"].string_value
 
         if not detector_name:
+            LOGGER.warning("No detector name provided, using default detector")
             self.detector = TorchvisionDetector(tracker_cfg.detector_config)
         else:
             vision_service = dependencies[Vision.get_resource_name(detector_name)]
