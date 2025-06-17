@@ -51,7 +51,7 @@ class Track:
         self.label = label
 
         self.persistence: int = 0
-        self.min_persistence: int = 5  # TODO: talk with Khari about this
+        self.min_persistence: int = 3
         self.is_candidate: bool = is_candidate
         self._is_detected: bool = True
 
