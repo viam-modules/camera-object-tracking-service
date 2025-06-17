@@ -26,9 +26,27 @@ class ImageObject:
         self,
         viam_image: ViamImage,
         pil_image: Optional[Image.Image] = None,
-        device=None,
         crop_region: Optional[dict] = None,
     ):
+        """
+        Initialize an ImageObject from a ViamImage.
+
+        Args:
+            viam_image: A ViamImage object containing the image data
+            pil_image: Optional PIL Image object. If not provided, will be created from viam_image
+            crop_region: Optional dictionary with relative coordinates (0.0-1.0) for cropping.
+                        Should contain keys: x1_rel, y1_rel, x2_rel, y2_rel
+
+        Attributes:
+            viam_image: The original ViamImage object
+            pil_image: PIL Image representation in RGB format
+            np_array: NumPy array representation of the image (H, W, C) in uint8
+            uint8_tensor: PyTorch tensor in uint8 format (C, H, W) on specified device
+            float32_tensor: PyTorch tensor in float32 format (C, H, W) on specified device
+            width: Width of the image in pixels
+            height: Height of the image in pixels
+            device: The device (CPU/CUDA) where tensors are stored
+        """
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if pil_image is not None:
             self.pil_image = pil_image
