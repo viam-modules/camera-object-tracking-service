@@ -15,3 +15,5 @@ results*
 
 /pyinstaller_build/
 /pyinstaller_dist/
+/build/
+main
