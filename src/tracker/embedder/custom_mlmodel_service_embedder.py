@@ -42,12 +42,7 @@ class CustomMLModelServiceEmbedder(Embedder):
         cropped_images = self.crop_detections(image, detections)
 
         features = []
-        for cropped_image in cropped_images:
-            # Convert PyTorch tensor to numpy array and prepare for MLModel
-            # TODO: define a convention for input shape
-            img_np = cropped_image.numpy()
-
-            # Get embedding from MLModel
+        for img_np in cropped_images:
             try:
                 result = await self.ml_model.infer({self.input_name: img_np})
             except Exception as e:

@@ -58,7 +58,7 @@ class Embedder(ABC):
 
     def crop_detections(
         self, image: ImageObject, detections: List[Detection]
-    ) -> torch.Tensor:
+    ) -> np.ndarray:
         """
         Crop the detections from the image and return a tensor of the cropped images in one batch.
         """
@@ -92,11 +92,11 @@ class Embedder(ABC):
 
             # Resize the cropped image
 
-            resized_image, new_height, new_width, _, _ = resize_for_padding(
+            resized_image, _, _, _, _ = resize_for_padding(
                 cropped_image, self.input_shape
             )
             padded_image = pad_image_to_target_size(resized_image, self.input_shape)
             cropped_images.append(padded_image[0])
 
         # Stack all resized images into a batch
-        return torch.stack(cropped_images, dim=0)
+        return torch.stack(cropped_images, dim=0).numpy()
