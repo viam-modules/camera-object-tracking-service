@@ -6,6 +6,24 @@ from viam.services.vision import Detection
 
 
 class Track:
+    """
+    A class representing a tracked object with its properties and state.
+
+    Attributes:
+        track_id: Unique identifier for the track
+        bbox: Current bounding box coordinates as numpy array [x1, y1, x2, y2]
+        predicted_bbox: Predicted bounding box coordinates for next frame [x1, y1, x2, y2]
+        feature_vector: Feature vector (torch.Tensor) used for re-identification matching
+        age: Number of frames since the last successful detection/update
+        velocity: Motion velocity as numpy array [dx1, dy1, dx2, dy2] representing bbox change
+        distance: Distance metric from the last matching operation
+        label: Optional string label/class name for the tracked object
+        persistence: Number of consecutive frames this track has been detected
+        min_persistence: Minimum number of detections required before track is considered stable
+        is_candidate: Boolean indicating if this is a candidate track (not yet confirmed)
+        _is_detected: Private boolean indicating if the track was detected in the current frame
+    """
+
     def __init__(
         self,
         track_id,
