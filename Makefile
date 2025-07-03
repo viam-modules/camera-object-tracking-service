@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 .PHONY: setup clean pyinstaller clean-pyinstaller
 
 MODULE_DIR=$(shell pwd)
