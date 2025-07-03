@@ -38,7 +38,7 @@ $(PYINSTALLER_DISTPATH)/main: setup
 	$(PYTHON) -m PyInstaller --workpath "$(PYINSTALLER_WORKPATH)" --distpath "$(PYINSTALLER_DISTPATH)" main.spec
 
 archive.tar.gz: $(PYINSTALLER_DISTPATH)/main
-	cp $(PYINSTALLER_DISTPATH)/main ./
+	cp $(PYINSTALLER_DISTPATH)/main/main ./
 	tar -czvf archive.tar.gz main meta.json
 
 clean:
