@@ -38,9 +38,9 @@ pyinstaller: $(PYINSTALLER_DISTPATH)/main
 $(PYINSTALLER_DISTPATH)/main: setup
 	$(PYTHON) -m PyInstaller --workpath "$(PYINSTALLER_WORKPATH)" --distpath "$(PYINSTALLER_DISTPATH)" main.spec
 
-archive.tar.gz: $(PYINSTALLER_DISTPATH)/main
+module.tar.gz: $(PYINSTALLER_DISTPATH)/main
 	cp $(PYINSTALLER_DISTPATH)/main ./
-	tar -czvf archive.tar.gz main meta.json
+	tar -czvf module.tar.gz main meta.json
 
 clean:
 	rm -rf $(BUILD)
