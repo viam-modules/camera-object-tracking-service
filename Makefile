@@ -36,7 +36,7 @@ setup: $(VENV_DIR)
 pyinstaller: $(PYINSTALLER_DISTPATH)/main
 
 $(PYINSTALLER_DISTPATH)/main: setup
-	$(PYTHON) -m PyInstaller --workpath "$(PYINSTALLER_WORKPATH)" --distpath "$(PYINSTALLER_DISTPATH)" main.spec --hidden-import=libjpeg --hidden-import=libpng
+	$(PYTHON) -m PyInstaller --workpath "$(PYINSTALLER_WORKPATH)" --distpath "$(PYINSTALLER_DISTPATH)" main.spec 
 
 module.tar.gz: $(PYINSTALLER_DISTPATH)/main
 	cp $(PYINSTALLER_DISTPATH)/main ./
