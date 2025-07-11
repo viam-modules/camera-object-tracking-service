@@ -121,7 +121,12 @@ class TrackerService(Vision, Reconfigurable):
 
     async def stop_and_get_new_tracker(self, tracker_cfg):
         await self.tracker.stop()
-        self.tracker = Tracker(tracker_cfg, camera=self.camera, detector=self.detector)
+        self.tracker = Tracker(
+            tracker_cfg,
+            camera=self.camera,
+            detector=self.detector,
+            embedder=self.embedder,
+        )
         self.tracker.start()
 
     async def get_properties(

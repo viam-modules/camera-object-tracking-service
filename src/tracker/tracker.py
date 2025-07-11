@@ -120,7 +120,7 @@ class Tracker:
         except Exception as e:
             LOGGER.error(f"Error getting image: {e}")
             return None
-        return ImageObject(viam_img, device=self.device, crop_region=self.crop_region)
+        return ImageObject(viam_img, crop_region=self.crop_region)
 
     def relabel_tracks(self, dict_old_label_new_label: Dict[str, str]):
         answer = {}
