@@ -14,8 +14,8 @@ TORCHVISION_REPO=https://github.com/pytorch/vision
 TORCHVISION_WHEEL=torchvision-0.20.0a0+afc54f7-cp310-cp310-linux_aarch64.whl
 TORCHVISION_VERSION=0.20.0
 
-JP6_REQUIREMENTS=requirements-jp6.txt
-JP5_REQUIREMENTS=requirements-jp5.txt
+JP6_REQUIREMENTS=requirements_jp6.txt
+REQUIREMENTS=requirements.txt
 
 PYINSTALLER_WORKPATH=$(BUILD)/pyinstaller_build
 PYINSTALLER_DISTPATH=$(BUILD)/pyinstaller_dist
