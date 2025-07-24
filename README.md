@@ -5,13 +5,13 @@ This is a [Viam module](https://docs.viam.com/extend/modular-resources/) providi
 
 ## Getting started
 
-To use this module, follow these instructions to [add a module from the Viam Registry](https://docs.viam.com/registry/modular-resources/#configuration) and select the `viam:vision:re-id-object-tracker` model from the [`camera-object-tracking-service` module](https://app.viam.com/module/viam/camera-object-tracking-service).
+To use this module, follow these instructions to [add a module from the Viam Registry](https://docs.viam.com/registry/modular-resources/#configuration) and select the `viam:vision:camera-object-tracking-service` model from the [`camera-object-tracking-service` module](https://app.viam.com/module/viam/camera-object-tracking-service).
 This module implements the following methods of the [vision service API](https://docs.viam.com/services/vision/#api):
 
 - `GetDetections()`: returns the bounding boxes with the unique id as label and the matching confidence.
 - `CaptureAllFromCamera()`: returns the image and detections all together, given a camera name.
 
-The tracking problem consists of two parts: detection and visual matching. The `camera-object-tracking-service` module provides the necessary logic to perform object tracking, given a detector and a visual matcher (i.e., an embedder). The tracker can use either a default, built-in general embedder or an ML model service.
+The tracking problem consists of two parts: detection and visual matching. The `camera-object-tracking-service` module provides the necessary logic to perform object tracking, given a detector and a visual matcher (i.e., an embedder). If you don't configure an embedder (ML model service) or detector (vision service), defaults will be used. Defaults are chosen to be general purpose.
 
 ## Configure your `camera-object-tracking-service` vision service
 
@@ -19,7 +19,7 @@ The tracking problem consists of two parts: detection and visual matching. The `
 > Before configuring your vision service, you must [create a robot](https://docs.viam.com/manage/fleet/robots/#add-a-new-robot).
 
 Navigate to the [**CONFIGURE** tab](https://docs.viam.com/configure/) of your [machine](https://docs.viam.com/fleet/machines/) in the [Viam app](https://app.viam.com/).
-[Add vision / re-id-object-tracker to your machine](https://docs.viam.com/configure/#components).
+[Add vision / camera-object-tracking-service to your machine](https://docs.viam.com/configure/#components).
 
 ### Attributes description
 
@@ -42,7 +42,7 @@ Navigate to the [**CONFIGURE** tab](https://docs.viam.com/configure/) of your [m
 This project includes a `Makefile` script to automate the PyInstaller build process for Jetson machines. Building and deploying the module for other platforms should be done through CI.
 PyInstaller is used to create standalone executables from the Python module scripts.
 
-####  `make setup-jp6`
+####  1. `make setup-jp6`
 
 1. installs system dependencies (cuDNN and cuSPARSELt)
 2. creates venv environment (under `./build/.venv`)
@@ -50,25 +50,15 @@ PyInstaller is used to create standalone executables from the Python module scri
 
 Cleaned with `make clean` (this also deletes pyinstaller build directory)
 
-#### `make pyinstaller`
-This command builds the module executable using PyInstaller.
+#### 2.  `make module.tar.gz`
+This command builds the module executable using PyInstaller and creates a `.tar` file with the files needed to run the module.
+The PyInstaller executable is created under `./build/pyinstaller_dist`.
 
-This creates the PyInstaller executable under `./build/pyinstaller_dist`.
-To upload to viam registry:
-
-First copy `./build/pyinstaller_dist/main` in the `camera-object-tracking-service` repository.
-
-```bash
-cd camera-object-tracking-service
-cp ./build/pyinstaller_dist/main ./
-```
-
-Compress and upload to the registry:
+#### 3. Upload to the registry with the right tag
 
 ```bash
 viam login
-tar -czvf archive.tar.gz meta.json main first_run.sh  #needs to be on the same level
 viam module upload --version 0.0.0-rc0 --platform linux/arm64 --tags 'jetpack:6' archive.tar.gz
 ```
 
-Cleaned with `make clean-pyinstaller`
+Cleaned with `make clean`
