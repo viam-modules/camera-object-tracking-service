@@ -10,6 +10,9 @@ from PIL import Image
 from tabulate import tabulate
 from viam.logging import getLogger
 from viam.media.video import CameraMimeType, ViamImage
+from typing import Dict, List, Sequence, Tuple
+from viam.proto.service.vision import Detection
+
 
 LOGGER = getLogger(__name__)
 SUPPORTED_IMAGE_TYPE = [
@@ -18,7 +21,6 @@ SUPPORTED_IMAGE_TYPE = [
     CameraMimeType.VIAM_RGBA,
 ]
 LIBRARY_SUPPORTED_FORMATS = ["JPEG", "PNG", "VIAM_RGBA"]
-
 
 def decode_image(image: Union[Image.Image, ViamImage]) -> np.ndarray:
     """decode image to BGR numpy array
