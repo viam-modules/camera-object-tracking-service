@@ -32,6 +32,8 @@ from src.tracker.embedder.custom_mlmodel_service_embedder import (
 )
 from src.tracker.embedder.embedder import Embedder
 from src.tracker.tracker import Tracker
+from src.tracker.tracker import Tracker
+from src.tracker.utils import Zones, assign_detections_to_zones
 
 LOGGER = getLogger(__name__)
 
@@ -118,6 +120,31 @@ class TrackerService(Vision, Reconfigurable):
                 embedder=self.embedder,
             )
             self.tracker.start()
+
+        zones_field = config.attributes.fields.get("zones")
+        try:
+            raw_zones = zones_field.struct_value.fields if zones_field is not None else {}
+        except Exception as e:
+            LOGGER.error(f"Failed to read `zones` field: {e}")
+            raw_zones = {}
+
+        self.zones: Zones = {}
+        for zone_name, points_value in raw_zones.items():
+            try:
+                # each points_value is a StructValue of a list of polygons;
+                # here we assume one polygon per zone
+                polygon = [
+                    (
+                        pt.list_value.values[0].number_value,  # x
+                        pt.list_value.values[1].number_value,  # y
+                    )
+                    for pt in points_value.list_value.values
+                ]
+                self.zones[zone_name] = [polygon]
+            except Exception as e:
+                LOGGER.error(f"Failed to parse zone '{zone_name}': {e}")
+                # still register the zone key, but with no polygons
+                self.zones[zone_name] = []
 
     async def stop_and_get_new_tracker(self, tracker_cfg):
         await self.tracker.stop()
@@ -221,9 +248,26 @@ class TrackerService(Vision, Reconfigurable):
         *,
         timeout: Optional[float] = None,
         **kwargs,
-    ):
-        do_command_output = {}
-        return do_command_output
+    ) -> Mapping[str, ValueTypes]:
+        cmd = command.get("command")
+        LOGGER.info(f"TrackerService do_command: {cmd}")
+
+        if cmd == "get_current_tracks":
+            # 1) get the raw detections
+            raw = self.tracker.get_current_detections()
+            # 2) bucket them into zones
+            by_zone = assign_detections_to_zones(raw, self.zones)
+            # 3) serialise for JSON
+            current_tracks = {
+                zone: [
+                    {"id": det.id, "state": det.state}
+                    for det in dets
+                ]
+                for zone, dets in by_zone.items()
+            }
+            return {"current_tracks": current_tracks}
+
+        return {"status": f"Unknown command '{cmd}'"}
 
     async def close(self):
         """Safely shut down the resource and prevent further use.
