@@ -6,6 +6,8 @@ to perform face Re-Id.
 from asyncio import create_task
 from typing import Any, ClassVar, Dict, List, Mapping, Optional, Sequence
 
+from functools import wraps
+
 from typing_extensions import Self
 from viam.components.camera import Camera, CameraClient
 from viam.logging import getLogger
@@ -32,9 +34,26 @@ from src.tracker.embedder.custom_mlmodel_service_embedder import (
 )
 from src.tracker.embedder.embedder import Embedder
 from src.tracker.tracker import Tracker
+from src.tracker.utils import Zones, assign_detections_to_zones
+
 
 LOGGER = getLogger(__name__)
 
+# Set up decorator for debug logs
+def log_entry(func):
+    """A decorator that logs entry into a class method using self.logger."""
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        # The wrapper receives 'self' and can access the instance logger
+        self.logger.debug(f"IN {func.__name__}")
+        return func(self, *args, **kwargs)
+    return wrapper
+def log_all_methods(cls):
+    """A class decorator that applies 'log_entry' to all user-defined methods."""
+    for attr_name, attr_value in cls.__dict__.items():
+        if callable(attr_value) and not attr_name.startswith("__"):
+            setattr(cls, attr_name, log_entry(attr_value))
+    return cls
 
 class TrackerService(Vision, Reconfigurable):
     """TrackerService is a subclass a Viam Vision Service"""
@@ -85,6 +104,27 @@ class TrackerService(Vision, Reconfigurable):
         self.camera = dependencies[Camera.get_resource_name(self.camera_name)]
         detector_name = config.attributes.fields["detector_name"].string_value
 
+        '''
+        self.zones = {}
+
+        zones_field = config.attributes.fields.get("zones")
+        if zones_field and zones_field.struct_value.fields:
+            raw_zones_struct = zones_field.struct_value
+            LOGGER.debug("Parsing %d zones", len(raw_zones_struct.fields))
+
+            for zone_name, zone_value in raw_zones_struct.fields.items():
+                points = []
+                for point_value in zone_value.list_value.values:
+                    coords = point_value.list_value.values
+                    x = int(coords[0].number_value)
+                    y = int(coords[1].number_value)
+                    points.append((x, y))
+                self.zones[zone_name] = points
+        else:
+            LOGGER.info("No zones in config; skipping zone parsing")
+        LOGGER.info("TrackerService reconfigured with zones: %s", self.zones)
+        '''
+        
         if not detector_name:
             LOGGER.warning("No detector name provided, using default detector")
             self.detector = TorchvisionDetector(tracker_cfg.detector_config)
@@ -118,6 +158,9 @@ class TrackerService(Vision, Reconfigurable):
                 embedder=self.embedder,
             )
             self.tracker.start()
+        
+        LOGGER.info("TrackerService reconfigured with camera: %s, detector: %s, embedder: %s, tracker: %s", 
+                    self.camera_name, detector_name, embedder_name, self.tracker)
 
     async def stop_and_get_new_tracker(self, tracker_cfg):
         await self.tracker.stop()
@@ -222,8 +265,22 @@ class TrackerService(Vision, Reconfigurable):
         timeout: Optional[float] = None,
         **kwargs,
     ):
-        do_command_output = {}
-        return do_command_output
+        cmd = command.get("command")
+        LOGGER.debug(f"TrackerService do_command: {cmd}")
+
+        if cmd == "get_current_tracks":
+            # 1) get the raw detections
+            raw = self.tracker.get_current_detections()
+            # 2) bucket them into zones
+            by_zone = assign_detections_to_zones(raw, self.zones)
+            # 3) serialise for JSON
+            current_tracks = {
+                zone: [{"id": det.id, "state": det.state} for det in dets]
+                for zone, dets in by_zone.items()
+            }
+            return {"current_tracks": current_tracks}
+
+        return {"status": f"Unknown command '{cmd}'"}
 
     async def close(self):
         """Safely shut down the resource and prevent further use.

@@ -2,7 +2,12 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 from torchvision.io import write_png
+from typing import Dict, List, Sequence, Tuple
+from viam.proto.service.vision import Detection
 
+Point   = Tuple[float, float]
+Polygon = Sequence[Point]
+Zones   = Dict[str, List[Polygon]]
 
 def save_tensor(tensor: torch.Tensor, path):
     if tensor.is_cuda:
@@ -136,3 +141,31 @@ def get_cropped_tensor(
     cropped_tensor = input_tensor[:, y1:y2, x1:x2]
 
     return cropped_tensor
+
+def is_point_in_polygon(point: Point, polygon: Polygon) -> bool:
+    x, y = point
+    inside = False
+    for (xi, yi), (xj, yj) in zip(polygon, polygon[1:] + [polygon[0]]):
+        if ((yi > y) != (yj > y)) and (x < (xj - xi)*(y - yi)/(yj - yi) + xi):
+            inside = not inside
+    return inside
+
+def assign_detections_to_zones(
+    detections: List[Detection],
+    zones: Zones,
+) -> Dict[str, List[Detection]]:
+    assigned = {zone: [] for zone in zones}
+    for det in detections:
+        x1, y1 = det.x_min, det.y_min
+        x2, y2 = det.x_max, det.y_max
+        cx, cy = (x1 + x2)/2, (y1 + y2)/2
+
+        for zone_name, polys in zones.items():
+            for poly in polys:
+                if is_point_in_polygon((cx, cy), poly):
+                    assigned[zone_name].append(det)
+                    break
+            else:
+                continue
+            break
+    return assigned
