@@ -121,13 +121,12 @@ class TrackerService(Vision, Reconfigurable):
             self.tracker.start()
 
         raw_zones = config.attributes.fields["zones"].struct_value.fields
-        self.zones: Zones = {
-            zone_name: [
-                [(pt[0].number_value, pt[1].number_value) for pt in polygon.list_value]
-                for polygon in raw_zones[zone_name].list_value
-            ]
-            for zone_name in raw_zones
-        }
+        self.zones = {}
+        for zone_name in raw_zones:
+            zone = raw_zones[zone_name]
+            self.zones[zone_name] = []
+            for point in list(zone.list_value):
+                self.zones[zone_name].append((int(point[0]), int(point[1])))
 
     async def stop_and_get_new_tracker(self, tracker_cfg):
         await self.tracker.stop()
@@ -242,16 +241,12 @@ class TrackerService(Vision, Reconfigurable):
             by_zone = assign_detections_to_zones(raw, self.zones)
             # 3) serialise for JSON
             current_tracks = {
-                zone: [
-                    {"id": det.id, "state": det.state}
-                    for det in dets
-                ]
+                zone: [{"id": det.id, "state": det.state} for det in dets]
                 for zone, dets in by_zone.items()
             }
             return {"current_tracks": current_tracks}
 
         return {"status": f"Unknown command '{cmd}'"}
-
 
     async def close(self):
         """Safely shut down the resource and prevent further use.

@@ -33,6 +33,9 @@ WORKING_CONFIG_DICT = {
     "embedder_name": EMBEDDER_NAME,
     "_start_background_loop": False,
     "embedder_output_name": "output",
+    "zones": {
+        "ENTER": [[609, 1333], [1037, 1904], [529, 1907], [244, 1354], [608, 1317]]
+    },
 }
 
 
