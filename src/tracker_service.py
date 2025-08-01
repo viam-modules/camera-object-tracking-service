@@ -104,7 +104,6 @@ class TrackerService(Vision, Reconfigurable):
         self.camera = dependencies[Camera.get_resource_name(self.camera_name)]
         detector_name = config.attributes.fields["detector_name"].string_value
 
-        '''
         self.zones = {}
 
         zones_field = config.attributes.fields.get("zones")
@@ -123,7 +122,6 @@ class TrackerService(Vision, Reconfigurable):
         else:
             LOGGER.info("No zones in config; skipping zone parsing")
         LOGGER.info("TrackerService reconfigured with zones: %s", self.zones)
-        '''
         
         if not detector_name:
             LOGGER.warning("No detector name provided, using default detector")
