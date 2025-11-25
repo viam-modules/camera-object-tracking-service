@@ -71,7 +71,19 @@ class FakeCamera(Camera):
 
         :return: A list of NamedImage objects or ResponseMetadata.
         """
-        raise NotImplementedError
+        self.count += 1
+
+        if isinstance(self.images, deque):
+            # Rotate the deque to get the next image and wrap around if necessary
+            self.images.rotate(-1)
+            image = self.images[0]
+        else:
+            # Access the next image in the list
+            if self.count >= len(self.images):
+                raise IndexError("Already read all the images passed as input")
+            image = self.images[self.count]
+
+        return [pil.pil_to_viam_image(image, CameraMimeType.JPEG)]
 
     async def get_properties(self) -> Coroutine[Any, Any, GetPropertiesResponse]:
         """
