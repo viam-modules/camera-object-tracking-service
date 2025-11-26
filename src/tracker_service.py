@@ -9,7 +9,7 @@ from typing import Any, ClassVar, Dict, List, Mapping, Optional, Sequence, Tuple
 from typing_extensions import Self
 from viam.components.camera import Camera, CameraClient
 from viam.logging import getLogger
-from viam.media.video import CameraMimeType, ViamImage
+from viam.media.video import ViamImage
 from viam.module.types import Reconfigurable
 from viam.proto.app.robot import ServiceConfig
 from viam.proto.common import PointCloudObject, ResourceName

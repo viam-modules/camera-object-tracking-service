@@ -10,7 +10,6 @@ import torch
 from scipy.optimize import linear_sum_assignment
 from viam.components.camera import CameraClient
 from viam.logging import getLogger
-from viam.media.video import CameraMimeType
 from viam.proto.service.vision import Detection
 
 from src.config.config import TrackerConfig
