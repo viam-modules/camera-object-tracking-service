@@ -115,7 +115,7 @@ class Tracker:
 
     async def get_and_decode_img(self):
         try:
-            viam_imgs = await self.camera.get_images()
+            viam_imgs, _ = await self.camera.get_images()
             if len(viam_imgs) == 0:
                 raise ValueError("No images returned by get_images")
             viam_img = viam_imgs[0]

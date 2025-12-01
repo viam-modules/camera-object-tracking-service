@@ -83,7 +83,7 @@ class FakeCamera(Camera):
                 raise IndexError("Already read all the images passed as input")
             image = self.images[self.count]
 
-        return [pil.pil_to_viam_image(image, CameraMimeType.JPEG)]
+        return [pil.pil_to_viam_image(image, CameraMimeType.JPEG)], None
 
     async def get_properties(self) -> Coroutine[Any, Any, GetPropertiesResponse]:
         """

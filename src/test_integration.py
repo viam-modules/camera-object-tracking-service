@@ -82,7 +82,7 @@ class TestTracker:
     @pytest_asyncio.fixture(autouse=True)
     async def setup_service(self):
         self.service = get_vision_service(WORKING_CONFIG_DICT, reconfigure=True)
-        imgs = await self.service.tracker.camera.get_images()
+        imgs, _ = await self.service.tracker.camera.get_images()
         self.img = imgs[0]
         self.image_object = ImageObject(self.img)
         self.service.tracker.last_image = self.image_object
