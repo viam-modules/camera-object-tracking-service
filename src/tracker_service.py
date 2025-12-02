@@ -160,7 +160,7 @@ class TrackerService(Vision, Reconfigurable):
         img = None
         if return_image:
             imgs, _ = await self.camera.get_images()
-            if len(imgs) == 0:
+            if imgs is None or len(imgs) == 0:
                 raise ValueError("No images returned by get_images")
             img = imgs[0]
 
