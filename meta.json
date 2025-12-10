@@ -8,7 +8,8 @@
     {
       "api": "rdk:service:vision",
       "model": "viam:vision:camera-object-tracking-service",
-      "short_description": "A module for tracking objects in a camera stream."
+      "short_description": "A module for tracking objects in a camera stream.",
+      "markdown_link": "README.md"
     }
   ],
   "build": {
