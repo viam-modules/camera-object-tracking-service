@@ -4,12 +4,12 @@ to perform face Re-Id.
 """
 
 from asyncio import create_task
-from typing import Any, ClassVar, Dict, List, Mapping, Optional, Sequence
+from typing import Any, ClassVar, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from typing_extensions import Self
 from viam.components.camera import Camera, CameraClient
 from viam.logging import getLogger
-from viam.media.video import CameraMimeType, ViamImage
+from viam.media.video import ViamImage
 from viam.module.types import Reconfigurable
 from viam.proto.app.robot import ServiceConfig
 from viam.proto.common import PointCloudObject, ResourceName
@@ -61,7 +61,7 @@ class TrackerService(Vision, Reconfigurable):
 
     # Validates JSON Configuration
     @classmethod
-    def validate_config(cls, config: ServiceConfig) -> Sequence[str]:
+    def validate_config(cls, config: ServiceConfig) -> Tuple[Sequence[str], Sequence[str]]:
         """Validate config and returns a list of dependencies."""
         dependencies = []
         camera_name = config.attributes.fields["camera_name"].string_value
@@ -75,7 +75,7 @@ class TrackerService(Vision, Reconfigurable):
 
         # validate the config
         _ = TrackerConfig(config)
-        return dependencies
+        return dependencies, []
 
     def reconfigure(
         self, config: ServiceConfig, dependencies: Mapping[ResourceName, ResourceBase]
@@ -159,7 +159,10 @@ class TrackerService(Vision, Reconfigurable):
             )
         img = None
         if return_image:
-            img = await self.camera.get_image(mime_type=CameraMimeType.JPEG)
+            imgs, _ = await self.camera.get_images()
+            if imgs is None or len(imgs) == 0:
+                raise ValueError("No images returned by get_images")
+            img = imgs[0]
 
         detections = None
         if return_detections:

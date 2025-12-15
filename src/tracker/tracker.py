@@ -10,7 +10,6 @@ import torch
 from scipy.optimize import linear_sum_assignment
 from viam.components.camera import CameraClient
 from viam.logging import getLogger
-from viam.media.video import CameraMimeType
 from viam.proto.service.vision import Detection
 
 from src.config.config import TrackerConfig
@@ -116,7 +115,10 @@ class Tracker:
 
     async def get_and_decode_img(self):
         try:
-            viam_img = await self.camera.get_image(mime_type=CameraMimeType.JPEG)
+            viam_imgs, _ = await self.camera.get_images()
+            if viam_imgs is None or len(viam_imgs) == 0:
+                raise ValueError("No images returned by get_images")
+            viam_img = viam_imgs[0]
         except Exception as e:
             LOGGER.error(f"Error getting image: {e}")
             return None
