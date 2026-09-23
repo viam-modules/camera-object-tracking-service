@@ -15,8 +15,8 @@ exceptiongroup==1.2.2
 filelock==3.17.0
 flatbuffers==25.1.24
 fsspec==2024.12.0
-googleapis-common-protos==1.66.0
-grpclib==0.4.7
+googleapis-common-protos==1.73.0
+grpclib==0.4.9
 h2==4.1.0
 hpack==4.1.0
 humanfriendly==10.0
@@ -37,7 +37,7 @@ packaging==24.2
 pillow==11.1.0
 platformdirs==4.3.6
 pluggy==1.5.0
-protobuf==5.29.1
+protobuf==6.33.5
 pyinstaller==6.11.1
 pyinstaller-hooks-contrib==2025.0
 pylint==3.3.4
@@ -50,5 +50,5 @@ tabulate==0.9.0
 tomli==2.2.1
 tomlkit==0.13.2
 types-tabulate==0.9.0.20241207
-typing_extensions==4.12.2
+typing_extensions==4.15.0
 viam-sdk==0.80.0
