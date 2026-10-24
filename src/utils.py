@@ -91,7 +91,7 @@ def log_cost_matrix(cost_matrix, track_ids, iteration_number):
     # track_ids = list(self.tracks.keys())
 
     # Create the detection headers
-    detection_headers = [f"detection_{i+1}" for i in range(cost_matrix.shape[1])]
+    detection_headers = [f"detection_{i + 1}" for i in range(cost_matrix.shape[1])]
 
     # Creating the table data
     table_data = []
