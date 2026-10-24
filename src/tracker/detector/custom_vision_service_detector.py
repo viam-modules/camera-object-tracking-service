@@ -1,8 +1,6 @@
-from typing import List, Optional
+from typing import List
 
-from viam.media.video import ViamImage
 from viam.services.vision import Vision
-from viam.utils import ValueTypes
 
 from src.config.config import DetectorConfig
 from src.image.image import ImageObject

@@ -5,9 +5,7 @@ from typing import Dict, List
 
 import torch
 from torchvision.models.detection import (
-    FasterRCNN_MobileNet_V3_Large_320_FPN_Weights,
     FasterRCNN_MobileNet_V3_Large_FPN_Weights,
-    fasterrcnn_mobilenet_v3_large_320_fpn,
     fasterrcnn_mobilenet_v3_large_fpn,
 )
 

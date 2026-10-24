@@ -1,6 +1,5 @@
 from typing import List
 
-import numpy as np
 import torch
 from viam.logging import getLogger
 from viam.services.mlmodel import MLModel

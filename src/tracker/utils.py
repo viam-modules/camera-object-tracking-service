@@ -1,6 +1,5 @@
 import torch
 import torch.nn.functional as F
-from PIL import Image
 from torchvision.io import write_png
 
 
