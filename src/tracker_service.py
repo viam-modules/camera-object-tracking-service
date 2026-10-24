@@ -61,7 +61,9 @@ class TrackerService(Vision, Reconfigurable):
 
     # Validates JSON Configuration
     @classmethod
-    def validate_config(cls, config: ServiceConfig) -> Tuple[Sequence[str], Sequence[str]]:
+    def validate_config(
+        cls, config: ServiceConfig
+    ) -> Tuple[Sequence[str], Sequence[str]]:
         """Validate config and returns a list of dependencies."""
         dependencies = []
         camera_name = config.attributes.fields["camera_name"].string_value
